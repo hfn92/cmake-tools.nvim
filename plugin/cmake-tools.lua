@@ -2,6 +2,7 @@
 -- This plugin is intended to support cmake integration in neovim.
 
 local cmake_tools = require("cmake-tools")
+local cmake_tools_ctest = require("cmake-tools.ctest")
 local has_nvim_dap, _ = pcall(require, "dap")
 
 ---------------- Commands ------------------
@@ -192,5 +193,15 @@ vim.api.nvim_create_user_command(
   { -- opts
     nargs = 0,
     desc = "CMake select launch target",
+  }
+)
+
+--- CRest Run
+vim.api.nvim_create_user_command(
+  "CTestRun", -- name
+  cmake_tools_ctest.run, -- command
+  { -- opts
+    nargs = 0,
+    desc = "CTest Run",
   }
 )
