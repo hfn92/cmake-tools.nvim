@@ -524,7 +524,14 @@ function cmake.run(opt)
           environment.get_run_environment(config, opt.target, true)
         )
       end
-      utils.execute(target_path, full_cmd, config.terminal, config.executor)
+      -- utils.execute(target_path, full_cmd, config.terminal, config.executor)
+      utils.execute2(
+        target_path,
+        cmake:get_launch_args(),
+        launch_path,
+        environment.get_run_environment_table(config, opt.target),
+        config.executor
+      )
       full_cmd = ""
     end)
   else
@@ -582,8 +589,16 @@ function cmake.run(opt)
             opt.wrap_call,
             environment.get_run_environment(config, config.launch_target, true)
           )
+          environment.get_run_environment(config, config.launch_target, true)
         end
-        utils.execute(target_path, full_cmd, config.terminal, config.executor)
+        -- utils.execute(target_path, full_cmd, config.terminal, config.executor)
+        utils.execute2(
+          target_path,
+          cmake:get_launch_args(),
+          launch_path,
+          environment.get_run_environment_table(config, config.launch_target),
+          config.executor
+        )
         full_cmd = ""
       end)
     end

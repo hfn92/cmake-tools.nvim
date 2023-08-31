@@ -74,8 +74,24 @@ function utils.execute(executable, full_cmd, terminal_data, executor_data)
     utils.close_cmake_window(executor_data)
   end
 
-  -- Then, execute it
+  -- -- Then, execute it
   terminal.execute(executable, full_cmd, terminal_data.opts)
+end
+
+function utils.execute2(executable, args, cwd, env, executor_data)
+  -- Please save all
+  vim.cmd("silent exec " .. '"wall"')
+
+  -- First, if we use quickfix to generate, build, etc, we should close it
+  if executor_data.name ~= "terminal" then
+    utils.close_cmake_window(executor_data)
+  end
+
+  for index, value in pairs(env) do
+    env[index] = tostring(value)
+  end
+
+  utils.get_executor("overseer").run(executable, env, args, cwd, { new_task_opts = {} })
 end
 
 function utils.softlink(src, target, use_terminal, cwd, opts)
