@@ -78,7 +78,7 @@ function utils.execute(executable, full_cmd, terminal_data, executor_data)
   terminal.execute(executable, full_cmd, terminal_data.opts)
 end
 
-function utils.execute2(executable, args, cwd, env, executor_data)
+function utils.execute2(executable, args, cwd, env, executor_data, wrap_call)
   -- Please save all
   vim.cmd("silent exec " .. '"wall"')
 
@@ -89,6 +89,18 @@ function utils.execute2(executable, args, cwd, env, executor_data)
 
   for index, value in pairs(env) do
     env[index] = tostring(value)
+  end
+
+  if wrap_call then
+    args = vim.deepcopy(args)
+    table.insert(args, 1, executable)
+    executable = wrap_call[1]
+    table.remove(wrap_call, 1)
+    for _, v in ipairs(args) do
+      table.insert(wrap_call, v)
+    end
+    args = wrap_call
+    vim.notify(vim.inspect(args))
   end
 
   utils.get_executor("overseer").run(executable, env, args, cwd, { new_task_opts = {} })

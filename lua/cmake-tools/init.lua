@@ -530,7 +530,8 @@ function cmake.run(opt)
         cmake:get_launch_args(),
         launch_path,
         environment.get_run_environment_table(config, opt.target),
-        config.executor
+        config.executor,
+        opt.wrap_call
       )
       full_cmd = ""
     end)
@@ -597,7 +598,8 @@ function cmake.run(opt)
           cmake:get_launch_args(),
           launch_path,
           environment.get_run_environment_table(config, config.launch_target),
-          config.executor
+          config.executor,
+          opt.wrap_call
         )
         full_cmd = ""
       end)
