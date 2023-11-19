@@ -53,6 +53,9 @@ function cmake.setup(values)
       if old_config.build_type then
         config.build_type = old_config.build_type
       end
+      if old_config.variant then
+        config.variant = old_config.variant
+      end
       if old_config.build_target then
         config.build_target = old_config.build_target
       end
@@ -67,6 +70,9 @@ function cmake.setup(values)
       end
       if old_config.build_preset then
         config.build_preset = old_config.build_preset
+      end
+      if old_config.env_script then
+        config.env_script = old_config.env_script
       end
 
       config.cwd = old_config.cwd or vim.loop.cwd()
@@ -163,19 +169,37 @@ function cmake.generate(opt, callback)
       if type(callback) == "function" then
         callback()
       else
-        utils.run(full_cmd, {}, {}, config.cwd, config.executor, nil, const.cmake_notifications)
+        utils.run(
+          full_cmd,
+          config.env_script,
+          {},
+          {},
+          config.cwd,
+          config.executor,
+          nil,
+          const.cmake_notifications
+        )
         cmake.configure_compile_commands()
         cmake.create_regenerate_on_save_autocmd()
         full_cmd = ""
       end
     else
-      return utils.run(const.cmake_command, env, args, config.cwd, config.executor, function()
-        if type(callback) == "function" then
-          callback()
-        end
-        cmake.configure_compile_commands()
-        cmake.create_regenerate_on_save_autocmd()
-      end, const.cmake_notifications)
+      return utils.run(
+        const.cmake_command,
+        config.env_script,
+        env,
+        args,
+        config.cwd,
+        config.executor,
+        function()
+          if type(callback) == "function" then
+            callback()
+          end
+          cmake.configure_compile_commands()
+          cmake.create_regenerate_on_save_autocmd()
+        end,
+        const.cmake_notifications
+      )
     end
   end
 
@@ -191,7 +215,7 @@ function cmake.generate(opt, callback)
   -- specify build type, if exists cmake-variants.json,
   -- this will get build variant from it. Or this will
   -- get build variant from "Debug, Release, RelWithDebInfo, MinSizeRel"
-  if not config.build_type then
+  if not config.build_type or not config.variant then
     return cmake.select_build_type(function()
       cmake.generate(opt, callback)
     end)
@@ -206,12 +230,17 @@ function cmake.generate(opt, callback)
     const.cmake_kits_path
   )
 
-  if const.cmake_build_directory ~= "" then
-    config:update_build_dir(const.cmake_build_directory)
-  else
-    local _build_type = config.build_type:gsub("+", "_"):gsub(" ", "")
-    config:update_build_dir(const.cmake_build_directory_prefix .. _build_type)
-  end
+  config.env_script = kit_option.env_script
+  -- vim.print(config.env_script)
+
+  -- macro expansion for build directory
+  local build_dir = utils.prepare_build_directory(
+    const.cmake_build_directory,
+    kits_config,
+    config.kit,
+    config.variant
+  )
+  config:update_build_dir(build_dir)
 
   config:generate_build_directory()
 
@@ -237,20 +266,38 @@ function cmake.generate(opt, callback)
     if type(callback) == "function" then
       callback()
     else
-      utils.run(full_cmd, {}, {}, config.cwd, config.executor, nil, const.cmake_notifications)
+      utils.run(
+        full_cmd,
+        config.env_script,
+        {},
+        {},
+        config.cwd,
+        config.executor,
+        nil,
+        const.cmake_notifications
+      )
       cmake.configure_compile_commands()
       cmake.create_regenerate_on_save_autocmd()
       full_cmd = ""
     end
   else
     env = vim.tbl_extend("keep", env, kit_option.env)
-    utils.run(const.cmake_command, env, args, config.cwd, config.executor, function()
-      if type(callback) == "function" then
-        callback()
-      end
-      cmake.configure_compile_commands()
-      cmake.create_regenerate_on_save_autocmd()
-    end, const.cmake_notifications)
+    utils.run(
+      const.cmake_command,
+      config.env_script,
+      env,
+      args,
+      config.cwd,
+      config.executor,
+      function()
+        if type(callback) == "function" then
+          callback()
+        end
+        cmake.configure_compile_commands()
+        cmake.create_regenerate_on_save_autocmd()
+      end,
+      const.cmake_notifications
+    )
   end
 end
 
@@ -278,15 +325,33 @@ function cmake.clean(callback)
     if type(callback) == "function" then
       return callback()
     else
-      utils.run(full_cmd, {}, {}, config.cwd, config.executor, nil, const.cmake_notifications)
+      utils.run(
+        full_cmd,
+        config.env_script,
+        {},
+        {},
+        config.cwd,
+        config.executor,
+        nil,
+        const.cmake_notifications
+      )
       full_cmd = ""
     end
   else
-    return utils.run(const.cmake_command, env, args, config.cwd, config.executor, function()
-      if type(callback) == "function" then
-        callback()
-      end
-    end, const.cmake_notifications)
+    return utils.run(
+      const.cmake_command,
+      config.env_script,
+      env,
+      args,
+      config.cwd,
+      config.executor,
+      function()
+        if type(callback) == "function" then
+          callback()
+        end
+      end,
+      const.cmake_notifications
+    )
   end
 end
 
@@ -355,15 +420,33 @@ function cmake.build(opt, callback)
     if type(callback) == "function" then
       callback()
     else
-      utils.run(full_cmd, {}, {}, config.cwd, config.executor, nil, const.cmake_notifications)
+      utils.run(
+        full_cmd,
+        config.env_script,
+        {},
+        {},
+        config.cwd,
+        config.executor,
+        nil,
+        const.cmake_notifications
+      )
       full_cmd = ""
     end
   else
-    utils.run(const.cmake_command, env, args, config.cwd, config.executor, function()
-      if type(callback) == "function" then
-        callback()
-      end
-    end, const.cmake_notifications)
+    utils.run(
+      const.cmake_command,
+      config.env_script,
+      env,
+      args,
+      config.cwd,
+      config.executor,
+      function()
+        if type(callback) == "function" then
+          callback()
+        end
+      end,
+      const.cmake_notifications
+    )
   end
 end
 
@@ -425,6 +508,7 @@ function cmake.install(opt)
   vim.list_extend(args, fargs)
   return utils.run(
     const.cmake_command,
+    config.env_script,
     {},
     args,
     config.cwd,
@@ -854,6 +938,7 @@ function cmake.select_build_type(callback)
       end
       if config.build_type ~= build_type then
         config.build_type = build_type.short
+        config.variant = build_type.kv
         if type(callback) == "function" then
           callback()
         else
@@ -971,6 +1056,8 @@ function cmake.select_build_preset(callback)
     local build_preset_names = presets.parse("buildPresets", { include_hidden = false }, config.cwd)
     local build_presets =
       presets.parse_name_mapped("buildPresets", { include_hidden = false }, config.cwd)
+    build_preset_names = vim.list_extend(build_preset_names, { "None" })
+    build_presets = vim.tbl_extend("keep", build_presets, { None = { displayName = "None" } })
     local format_preset_name = function(p_name)
       local p = build_presets[p_name]
       return p.displayName or p.name
@@ -982,11 +1069,28 @@ function cmake.select_build_preset(callback)
         if not choice then
           return
         end
+        if choice == "None" then
+          config.build_preset = nil
+          return
+        end
         if config.build_preset ~= choice then
           config.build_preset = choice
         end
+        local associated_configure_preset =
+          presets.get_preset_by_name(choice, "buildPresets", config.cwd)["configurePreset"]
+        local configure_preset_updated = false
+
+        if
+          associated_configure_preset and config.configure_preset ~= associated_configure_preset
+        then
+          config.configure_preset = associated_configure_preset
+          configure_preset_updated = true
+        end
+
         if type(callback) == "function" then
           callback()
+        elseif configure_preset_updated then
+          cmake.generate({ bang = true, fargs = {} }, nil)
         end
       end)
     )
@@ -1353,10 +1457,12 @@ function cmake.select_cwd(cwd_path)
         --if new_path:is_dir() then
         config.cwd = vim.fn.resolve(input)
         --	end
+        cmake.generate({ bang = false, fargs = {} }, nil)
       end)
     )
   elseif cwd_path.args then
     config.cwd = vim.fn.resolve(cwd_path.args)
+    cmake.generate({ bang = false, fargs = {} }, nil)
   end
 end
 

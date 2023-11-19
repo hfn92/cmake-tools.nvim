@@ -27,8 +27,11 @@ require("cmake-tools").setup {
   cmake_regenerate_on_save = true, -- auto generate when save CMakeLists.txt
   cmake_generate_options = { "-DCMAKE_EXPORT_COMPILE_COMMANDS=1" }, -- this will be passed when invoke `CMakeGenerate`
   cmake_build_options = {}, -- this will be passed when invoke `CMakeBuild`
-  cmake_build_directory = "", -- this is used to specify generate directory for cmake
-  cmake_build_directory_prefix = "cmake_build_", -- when cmake_build_directory is set to "", this option will be activated
+  -- support macro expansion:
+  --       ${kit}
+  --       ${kitGenerator}
+  --       ${variant:xx}
+  cmake_build_directory = "out/${variant:buildType}", -- this is used to specify generate directory for cmake, allows macro expansion
   cmake_soft_link_compile_commands = true, -- this will automatically make a soft link from compile commands file to project root dir
   cmake_compile_commands_from_lsp = false, -- this will automatically set compile commands file location using lsp, to use it, please set `cmake_soft_link_compile_commands` to false
   cmake_kits_path = nil, -- this is used to specify global cmake kits path, see CMakeKits for detailed usage
@@ -104,6 +107,9 @@ Generally, the default is enough.
 ## :muscle: Contribute
 
 If you want to implement a missing feature, [consider making a PR](./docs/contribute.md).
+
+Optionally you can even add tests. We use [plenary test harness](https://github.com/nvim-lua/plenary.nvim#plenarytest_harness), as taken from [neotest-rust](https://github.com/rouge8/neotest-rust).
+The tests run from inside a neovim instance, so `vim` and such are available.
 
 ## LICENCE
 

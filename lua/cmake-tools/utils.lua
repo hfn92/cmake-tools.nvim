@@ -5,7 +5,6 @@ local Types = require("cmake-tools.types")
 local terminal = require("cmake-tools.executors.terminal")
 local notification = require("cmake-tools.notification")
 
--- local const = require("cmake-tools.const")
 ---@alias executor_conf {name:string, opts:table}
 
 local utils = {}
@@ -109,7 +108,7 @@ end
 function utils.softlink(src, target, use_terminal, cwd, opts)
   if use_terminal and not utils.file_exists(target) then
     local cmd = "cmake -E create_symlink " .. src .. " " .. target
-    terminal.run(cmd, {}, {}, cwd, opts)
+    terminal.run(cmd, "", {}, {}, cwd, opts)
     return
   end
 
@@ -156,13 +155,14 @@ end
 
 ---Run a commond
 ---@param cmd string the executable to execute
+---@param env_script string environment setup script
 ---@param env table environment variables
 ---@param args table arguments to the executable
 ---@param cwd string the directory to run in
 ---@param executor_data executor_conf the executor
 ---@param on_success nil|function extra arguments, f.e on_success is a callback to be called when the process finishes
 ---@return nil
-function utils.run(cmd, env, args, cwd, executor_data, on_success, cmake_notifications)
+function utils.run(cmd, env_script, env, args, cwd, executor_data, on_success, cmake_notifications)
   -- save all
   vim.cmd("wall")
 
@@ -177,24 +177,26 @@ function utils.run(cmd, env, args, cwd, executor_data, on_success, cmake_notific
     notification.update_spinner()
   end
 
-  utils.get_executor(executor_data.name).run(cmd, env, args, cwd, executor_data.opts, function(code)
-    local msg = "Exited with code " .. code
-    local level = cmake_notifications.level
-    local icon = ""
-    if code ~= 0 then
-      level = "error"
-      icon = ""
-    end
-    notification.notify(
-      msg,
-      level,
-      { icon = icon, replace = notification.notification.id, timeout = 3000 }
-    )
-    notification.notification = {} -- reset and stop update_spinner
-    if code == 0 and on_success then
-      on_success()
-    end
-  end, notify_update_line)
+  utils
+    .get_executor(executor_data.name)
+    .run(cmd, env_script, env, args, cwd, executor_data.opts, function(code)
+      local msg = "Exited with code " .. code
+      local level = cmake_notifications.level
+      local icon = ""
+      if code ~= 0 then
+        level = "error"
+        icon = ""
+      end
+      notification.notify(
+        msg,
+        level,
+        { icon = icon, replace = notification.notification.id, timeout = 3000 }
+      )
+      notification.notification = {} -- reset and stop update_spinner
+      if code == 0 and on_success then
+        on_success()
+      end
+    end, notify_update_line)
 end
 
 --- Check if exists active job.
@@ -228,6 +230,39 @@ end
 ---@param executor_data executor_conf the executor
 function utils.stop(executor_data)
   utils.get_executor(executor_data.name).stop(executor_data.opts)
+end
+
+---Prepare build directory. Which allows macro expansion.
+---@param build_dir string build directory provided by user
+---@param kits table all the kits
+---@param kit table current selected kit
+---@param variant table current selected variant
+function utils.prepare_build_directory(build_dir, kits, kit, variant)
+  -- macro expansion:
+  --       ${kit}
+  --       ${kitGenerator}
+  --       ${variant:xx}
+  -- get the detailed info of the selected kit
+  local kit_info = nil
+  if kits then
+    for _, item in ipairs(kits) do
+      if item.name == kit then
+        kit_info = item
+      end
+    end
+  end
+  build_dir = build_dir:gsub("${kit}", kit_info and kit_info.name or "")
+  build_dir = build_dir:gsub("${kitGenerator}", kit_info and kit_info.generator or "")
+
+  build_dir = build_dir:gsub("${variant:(%w+)}", function(v)
+    if variant and variant[v] then
+      return variant[v]
+    end
+
+    return ""
+  end)
+
+  return build_dir
 end
 
 return utils
