@@ -102,7 +102,7 @@ function utils.execute2(executable, args, cwd, env, executor_data, wrap_call)
     vim.notify(vim.inspect(args))
   end
 
-  utils.get_executor("overseer").run(executable, env, args, cwd, { new_task_opts = {} })
+  utils.get_executor("overseer").run(executable, nil, env, args, cwd, { new_task_opts = {} })
 end
 
 function utils.softlink(src, target, use_terminal, cwd, opts)
