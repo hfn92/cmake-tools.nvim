@@ -608,10 +608,9 @@ function cmake.run(opt)
           environment.get_run_environment(config, opt.target, true)
         )
       end
-      -- utils.execute(target_path, full_cmd, config.terminal, config.executor)
       utils.execute2(
         target_path,
-        cmake:get_launch_args(),
+        opt.args and opt.args or config.target_settings[opt.target].args,
         launch_path,
         environment.get_run_environment_table(config, opt.target),
         config.executor,
