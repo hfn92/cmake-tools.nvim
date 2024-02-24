@@ -28,6 +28,7 @@ local Config = {
   always_use_terminal = false,
   env_script = " ",
   cwd = vim.loop.cwd(),
+  hooks = {},
 }
 
 function Config:new(const)

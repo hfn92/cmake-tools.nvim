@@ -4,6 +4,7 @@ local Result = require("cmake-tools.result")
 local Types = require("cmake-tools.types")
 local terminal = require("cmake-tools.executors.terminal")
 local notification = require("cmake-tools.notification")
+local hooks = require("cmake-tools.hooks")
 
 ---@alias executor_conf {name:string, opts:table}
 
@@ -144,6 +145,10 @@ local notify_update_line = function(out, err)
   local line = err and err or out
   if line ~= nil then
     if line and line:match("^%[%s*(%d+)%s*%%%]") then -- only show lines containing build progress e.g [ 12%]
+      hooks:handle_on_progress({
+        kind = "progress",
+        percentage = tonumber(line:match("^%[%s*(%d+)%s*%%%]")),
+      })
       notification.notification.id = notification.notify( -- notify with percentage and message
         line,
         err and "warn" or notification.notification.level,
@@ -177,9 +182,13 @@ function utils.run(cmd, env_script, env, args, cwd, executor_data, on_success, c
     notification.update_spinner()
   end
 
+  -- vim.notify(vim.inspect(args))
+  hooks:handle_on_progress({ kind = "begin", percentage = 0 })
+
   utils
     .get_executor(executor_data.name)
     .run(cmd, env_script, env, args, cwd, executor_data.opts, function(code)
+      hooks:handle_on_progress({ kind = "end", percentage = 100 })
       local msg = "Exited with code " .. code
       local level = cmake_notifications.level
       local icon = ""

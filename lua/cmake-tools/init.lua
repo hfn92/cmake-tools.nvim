@@ -41,6 +41,10 @@ function cmake.setup(values)
     )
   end
 
+  if values.hooks then
+    require("cmake-tools.hooks").on_progress = values.hooks.on_progress
+  end
+
   config = Config:new(const)
 
   -- auto reload previous session
