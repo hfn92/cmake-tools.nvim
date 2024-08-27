@@ -103,7 +103,13 @@ function utils.execute2(executable, args, cwd, env, executor_data, wrap_call)
     vim.notify(vim.inspect(args))
   end
 
-  utils.get_executor("overseer").run(executable, nil, env, args, cwd, { new_task_opts = {} })
+  utils
+    .get_executor("overseer")
+    .run(executable, nil, env, args, cwd, { new_task_opts = {} }, function(code)
+      if code ~= 0 then
+        vim.cmd("OverseerQuickAction open output in quickfix")
+      end
+    end)
 end
 
 function utils.softlink(src, target, use_terminal, cwd, opts)
