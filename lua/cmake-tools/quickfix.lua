@@ -23,9 +23,22 @@ local function append_to_quickfix(error, data)
   end
 end
 
+local function is_quickfix_open()
+  local qf_exists = false
+  for _, win in pairs(vim.fn.getwininfo()) do
+    if win["quickfix"] == 1 then
+      qf_exists = true
+    end
+  end
+
+  return qf_exists
+end
+
 function quickfix.show(opts)
-  vim.api.nvim_command(opts.position .. " copen " .. opts.size)
-  vim.api.nvim_command("wincmd p")
+  if not is_quickfix_open() then
+    vim.api.nvim_command(opts.position .. " copen " .. opts.size)
+    vim.api.nvim_command("wincmd p")
+  end
 end
 
 function quickfix.close(opts)
