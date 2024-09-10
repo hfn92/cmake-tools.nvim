@@ -8,6 +8,7 @@ local Job = require("plenary.job")
 ---@class quickfix : executor
 local quickfix = {
   job = nil,
+  was_open = false,
 }
 
 function quickfix.scroll_to_bottom()
@@ -42,10 +43,14 @@ function quickfix.show(opts)
 end
 
 function quickfix.close(opts)
-  vim.api.nvim_command("cclose")
+  if not quickfix.was_open then
+    vim.api.nvim_command("cclose")
+  end
 end
 
 function quickfix.run(cmd, env_script, env, args, cwd, opts, on_exit, on_output)
+  quickfix.was_open = is_quickfix_open()
+
   vim.fn.setqflist({}, " ", { title = cmd .. " " .. table.concat(args, " ") })
   if opts.show == "always" then
     quickfix.show(opts)
