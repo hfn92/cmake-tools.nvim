@@ -21,6 +21,7 @@ function overseer_executor.run(cmd, env_script, env, args, cwd, opts, on_exit, o
     args = args,
     env = env,
     cwd = cwd,
+    components = { { "on_output_quickfix", open_on_exit = "failure" }, "default" },
   }, opts.new_task_opts)
   overseer_executor.job = overseer.new_task(opts)
   if on_exit ~= nil then
@@ -30,6 +31,7 @@ function overseer_executor.run(cmd, env_script, env, args, cwd, opts, on_exit, o
   end
   if on_output ~= nil then
     overseer_executor.job:subscribe("on_output", function(_, data)
+      vim.notify(vim.inspect(data))
       local stdout = data[0]
       local stderr = data[1]
       on_output(stdout, stderr)
