@@ -161,6 +161,19 @@ local notify_update_line = function(out, err)
         { replace = notification.notification.id, title = "CMakeTools" }
       )
     end
+
+    local current, total = line:match("^%[(.+)/(.+)]%s+(.+)")
+    if current and total then -- only show lines containing build progress e.g [ 12%]
+      hooks:handle_on_progress({
+        kind = "progress",
+        percentage = math.ceil((tonumber(current) / tonumber(total)) * 100),
+      })
+      notification.notification.id = notification.notify( -- notify with percentage and message
+        line,
+        err and "warn" or notification.notification.level,
+        { replace = notification.notification.id, title = "CMakeTools" }
+      )
+    end
   end
 end
 
