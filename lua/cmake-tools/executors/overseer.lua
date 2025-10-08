@@ -21,7 +21,15 @@ function overseer_executor.run(cmd, env_script, env, args, cwd, opts, on_exit, o
     args = args,
     env = env,
     cwd = cwd,
-    components = { { "on_output_quickfix", open_on_exit = "failure" }, "default" },
+    components = {
+      {
+        "on_output_quickfix",
+        open_on_exit = "failure",
+        relative_file_root = ".",
+        -- errorformat = "%b------------",
+      },
+      "default",
+    },
   }, opts.new_task_opts)
   overseer_executor.job = overseer.new_task(opts)
   if on_exit ~= nil then
